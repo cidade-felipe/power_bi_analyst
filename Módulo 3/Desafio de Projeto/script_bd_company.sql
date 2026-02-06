@@ -1,102 +1,75 @@
-create schema if not exists azure_company;
-use azure_company;
-
-select * from information_schema.table_constraints
-	where constraint_schema = 'azure_company';
-
--- restrição atribuida a um domínio
--- create domain D_num as int check(D_num> 0 and D_num< 21);
+CREATE SCHEMA IF NOT EXISTS company;
+USE company;
 
 CREATE TABLE employee(
-	Fname varchar(15) not null,
-    Minit char,
-    Lname varchar(15) not null,
-    Ssn char(9) not null, 
-    Bdate date,
-    Address varchar(30),
-    Sex char,
-    Salary decimal(10,2),
-    Super_ssn char(9),
-    Dno int not null,
-    constraint chk_salary_employee check (Salary> 2000.0),
-    constraint pk_employee primary key (Ssn)
+  Fname VARCHAR(15) NOT NULL,
+  Minit CHAR(1),
+  Lname VARCHAR(15) NOT NULL,
+  Ssn CHAR(9) NOT NULL,
+  Bdate DATE,
+  Address VARCHAR(30),
+  Sex CHAR(1),
+  Salary DECIMAL(10,2),
+  Super_ssn CHAR(9),
+  Dno INT NOT NULL DEFAULT 1,
+  CONSTRAINT chk_salary_employee CHECK (Salary > 2000.0),
+  CONSTRAINT pk_employee PRIMARY KEY (Ssn)
 );
 
-alter table employee 
-	add constraint fk_employee 
-	foreign key(Super_ssn) references employee(Ssn)
-    on delete set null
-    on update cascade;
+ALTER TABLE employee
+  ADD CONSTRAINT fk_employee_super
+  FOREIGN KEY (Super_ssn) REFERENCES employee(Ssn)
+  ON DELETE SET NULL
+  ON UPDATE CASCADE;
 
-alter table employee modify Dno int not null default 1;
-
-desc employee;
-
-create table departament(
-	Dname varchar(15) not null,
-    Dnumber int not null,
-    Mgr_ssn char(9) not null,
-    Mgr_start_date date, 
-    Dept_create_date date,
-    constraint chk_date_dept check (Dept_create_date < Mgr_start_date),
-    constraint pk_dept primary key (Dnumber),
-    constraint unique_name_dept unique(Dname),
-    foreign key (Mgr_ssn) references employee(Ssn)
+CREATE TABLE departament(
+  Dname VARCHAR(15) NOT NULL,
+  Dnumber INT NOT NULL,
+  Mgr_ssn CHAR(9) NOT NULL,
+  Mgr_start_date DATE,
+  Dept_create_date DATE,
+  CONSTRAINT chk_date_dept CHECK (Dept_create_date < Mgr_start_date),
+  CONSTRAINT pk_dept PRIMARY KEY (Dnumber),
+  CONSTRAINT unique_name_dept UNIQUE (Dname),
+  CONSTRAINT fk_dept_mgr FOREIGN KEY (Mgr_ssn) REFERENCES employee(Ssn)
+    ON UPDATE CASCADE
 );
 
--- 'def', 'company_constraints', 'departament_ibfk_1', 'company_constraints', 'departament', 'FOREIGN KEY', 'YES'
--- modificar uma constraint: drop e add
-alter table departament drop  departament_ibfk_1;
-alter table departament 
-		add constraint fk_dept foreign key(Mgr_ssn) references employee(Ssn)
-        on update cascade;
-
-desc departament;
-
-create table dept_locations(
-	Dnumber int not null,
-	Dlocation varchar(15) not null,
-    constraint pk_dept_locations primary key (Dnumber, Dlocation),
-    constraint fk_dept_locations foreign key (Dnumber) references departament (Dnumber)
+CREATE TABLE dept_locations(
+  Dnumber INT NOT NULL,
+  Dlocation VARCHAR(15) NOT NULL,
+  CONSTRAINT pk_dept_locations PRIMARY KEY (Dnumber, Dlocation),
+  CONSTRAINT fk_dept_locations FOREIGN KEY (Dnumber) REFERENCES departament(Dnumber)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 );
 
-alter table dept_locations drop fk_dept_locations;
-
-alter table dept_locations 
-	add constraint fk_dept_locations foreign key (Dnumber) references departament(Dnumber)
-	on delete cascade
-    on update cascade;
-
-create table project(
-	Pname varchar(15) not null,
-	Pnumber int not null,
-    Plocation varchar(15),
-    Dnum int not null,
-    primary key (Pnumber),
-    constraint unique_project unique (Pname),
-    constraint fk_project foreign key (Dnum) references departament(Dnumber)
+CREATE TABLE project(
+  Pname VARCHAR(15) NOT NULL,
+  Pnumber INT NOT NULL,
+  Plocation VARCHAR(15),
+  Dnum INT NOT NULL,
+  CONSTRAINT pk_project PRIMARY KEY (Pnumber),
+  CONSTRAINT unique_project UNIQUE (Pname),
+  CONSTRAINT fk_project_dept FOREIGN KEY (Dnum) REFERENCES departament(Dnumber)
+    ON UPDATE CASCADE
 );
 
-
-create table works_on(
-	Essn char(9) not null,
-    Pno int not null,
-    Hours decimal(3,1) not null,
-    primary key (Essn, Pno),
-    constraint fk_employee_works_on foreign key (Essn) references employee(Ssn),
-    constraint fk_project_works_on foreign key (Pno) references project(Pnumber)
+CREATE TABLE works_on(
+  Essn CHAR(9) NOT NULL,
+  Pno INT NOT NULL,
+  Hours DECIMAL(3,1) NOT NULL,
+  CONSTRAINT pk_works_on PRIMARY KEY (Essn, Pno),
+  CONSTRAINT fk_works_on_emp FOREIGN KEY (Essn) REFERENCES employee(Ssn),
+  CONSTRAINT fk_works_on_proj FOREIGN KEY (Pno) REFERENCES project(Pnumber)
 );
 
-drop table dependent;
-create table dependent(
-	Essn char(9) not null,
-    Dependent_name varchar(15) not null,
-    Sex char,
-    Bdate date,
-    Relationship varchar(8),
-    primary key (Essn, Dependent_name),
-    constraint fk_dependent foreign key (Essn) references employee(Ssn)
+CREATE TABLE dependent(
+  Essn CHAR(9) NOT NULL,
+  Dependent_name VARCHAR(15) NOT NULL,
+  Sex CHAR(1),
+  Bdate DATE,
+  Relationship VARCHAR(8),
+  CONSTRAINT pk_dependent PRIMARY KEY (Essn, Dependent_name),
+  CONSTRAINT fk_dependent_emp FOREIGN KEY (Essn) REFERENCES employee(Ssn)
 );
-
-show tables;
-desc dependent;

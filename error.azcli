@@ -1,0 +1,4 @@
+az monitor activity-log list \
+  --correlation-id 8f34f587-f314-41d3-b1ff-7905cb89aa00 \
+  --query "[?level=='Error' || status.value=='Failed'] | sort_by(@,&eventTimestamp)" \
+  -o jsonc
