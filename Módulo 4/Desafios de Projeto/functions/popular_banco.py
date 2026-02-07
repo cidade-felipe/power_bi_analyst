@@ -75,7 +75,6 @@ FIRST_NAMES_BY_SEX = [
    ("Wagner","M"),   
    ("Yasmin","F"),
 ]
-  
 
 MIDLE_NAMES = [
    "Silva",
@@ -134,11 +133,9 @@ DEFAULTS = {
    "cursos": 12,
    "disciplinas": 30,
    "professores": 25,
-   "alunos": 120,
    "dias": 365,
    "fatos": 800,
 }
-
 
 def _build_departamentos(qtd):
    names = list(BASE_DEPARTAMENTOS)
@@ -210,7 +207,6 @@ def popular_banco(
    cursos=DEFAULTS["cursos"],
    disciplinas=DEFAULTS["disciplinas"],
    professores=DEFAULTS["professores"],
-   alunos=DEFAULTS["alunos"],
    dias=DEFAULTS["dias"],
    fatos=DEFAULTS["fatos"],
    seed=None,
@@ -337,31 +333,6 @@ def popular_banco(
          for prof_id in prof_ids:
             prof_to_dept[prof_id] = random.choice(dept_ids)
 
-         nomes_genero_alunos = _generate_names_sex(alunos)
-            
-         aluno_rows = []
-         for fname, mname, lname, gender in nomes_genero_alunos:
-            cidade, estado = random.choice(CIDADES)
-            aluno_rows.append(
-               (
-                  fname,
-                  mname,
-                  lname,
-                  random.randint(17, 35),
-                  gender,
-                  cidade,
-                  estado,
-                  "Brasil",
-               )
-            )
-         aluno_ids = _insert_rows(
-            cur,
-            schema,
-            "dim_aluno",
-            ["pnome","mnome", "unome", "idade", "sexo", "cidade", "estado", "pais"],
-            aluno_rows,
-         )
-
          start_date = date.today().replace(month=1, day=1)
          tempo_rows = []
          for i in range(dias):
@@ -389,7 +360,6 @@ def popular_banco(
             disciplinas_do_curso = curso_to_disciplinas.get(curso_id) or disciplina_ids
             disc_id = random.choice(disciplinas_do_curso)
             tempo_id = random.choice(tempo_ids)
-            aluno_id = random.choice(aluno_ids)
 
             key = (prof_id, dept_id, curso_id, disc_id, tempo_id)
             if key in used:
@@ -403,7 +373,6 @@ def popular_banco(
                   curso_id,
                   disc_id,
                   tempo_id,
-                  aluno_id,
                   random.randint(1, 4),
                   random.randint(10, 60),
                   random.randint(30, 120),
@@ -419,7 +388,6 @@ def popular_banco(
                id_curso,
                id_disciplina,
                id_tempo,
-               id_aluno,
                qtd_turmas,
                qtd_alunos,
                carga_horaria,
@@ -430,7 +398,7 @@ def popular_banco(
             """
          ).format(
             sql.Identifier(schema, "fato_professor"),
-            sql.SQL(", ").join(sql.Placeholder() for _ in range(10)),
+            sql.SQL(", ").join(sql.Placeholder() for _ in range(9)),
          )
          for row in fact_rows:
             cur.execute(fact_query, row)
@@ -440,7 +408,6 @@ def popular_banco(
       "cursos": len(curso_ids),
       "disciplinas": len(disciplina_ids),
       "professores": len(prof_ids),
-      "alunos": len(aluno_ids),
       "tempo": len(tempo_ids),
       "fatos": len(fact_rows),
    }
@@ -455,7 +422,6 @@ if __name__ == "__main__":
    parser.add_argument("--cursos", type=int, default=DEFAULTS["cursos"])
    parser.add_argument("--disciplinas", type=int, default=DEFAULTS["disciplinas"])
    parser.add_argument("--professores", type=int, default=DEFAULTS["professores"])
-   parser.add_argument("--alunos", type=int, default=DEFAULTS["alunos"])
    parser.add_argument("--dias", type=int, default=DEFAULTS["dias"])
    parser.add_argument("--fatos", type=int, default=DEFAULTS["fatos"])
    parser.add_argument("--seed", type=int)
@@ -467,7 +433,6 @@ if __name__ == "__main__":
       cursos=args.cursos,
       disciplinas=args.disciplinas,
       professores=args.professores,
-      alunos=args.alunos,
       dias=args.dias,
       fatos=args.fatos,
       seed=args.seed,
